@@ -1,6 +1,7 @@
 # Hopefully a ball launcher
 
 ## How it works
+```text
 ┌─────────────────┐
 │   Controller    │
 └────────┬────────┘
