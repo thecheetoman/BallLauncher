@@ -22,9 +22,9 @@ void motorDisable(){
 
 //When turret motor activated, activated motor stage, when not activated, low power stage
 void motorTriggerHandler(){
-    motorState == !motorState;
-    if (motorState = true){
-        analogWrite(LPWM, 175);
+    motorState = !motorState;
+    if (motorState == true){
+        analogWrite(LPWM, 220);
         analogWrite(RPWM, 0);
     }
     else{

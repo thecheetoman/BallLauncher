@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include <Motor/motorController.h>
  
 void setup() {
   //Comms
@@ -14,6 +15,8 @@ void setup() {
   }
   
   Serial.println("Arduino Ready!");
+  initMotor();
+  motorEnable();
 }
  
 void processCommand(String cmd) {
@@ -28,9 +31,11 @@ void processCommand(String cmd) {
   }
   else if (cmd == "MHigh") {
     Serial.println("OK:Motor HIGH");
+    motorTriggerHandler();
   }
   else if (cmd == "MLow") {
     Serial.println("OK:Motor LOW");
+    motorTriggerHandler();
   }
   else if (cmd.length() > 0) {
     Serial.print("ERROR:Unknown command: ");
