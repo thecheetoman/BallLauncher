@@ -31,11 +31,11 @@ void processCommand(String cmd) {
   }
   else if (cmd == "MHigh") {
     Serial.println("OK:Motor HIGH");
-    motorTriggerHandler();
+    motorStateHigh();
   }
   else if (cmd == "MLow") {
     Serial.println("OK:Motor LOW");
-    motorTriggerHandler();
+    motorStateLow();
   }
   else if (cmd == "MEnable") {
   motorEnable();
@@ -90,6 +90,4 @@ void loop() {
       processCommand(command);
     }
   }
-  
-  delay(10); // Small delay to prevent flooding
 }
