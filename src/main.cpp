@@ -16,7 +16,7 @@ void setup() {
   
   Serial.println("Arduino Ready!");
   initMotor();
-  motorEnable();
+  motorDisable();
 }
  
 void processCommand(String cmd) {
@@ -36,6 +36,14 @@ void processCommand(String cmd) {
   else if (cmd == "MLow") {
     Serial.println("OK:Motor LOW");
     motorTriggerHandler();
+  }
+  else if (cmd == "MEnable") {
+  motorEnable();
+  Serial.println("OK:Motor enabled");
+  }
+  else if (cmd == "MDisable") {
+    motorDisable();
+    Serial.println("OK:Motor disabled");
   }
   else if (cmd.length() > 0) {
     Serial.print("ERROR:Unknown command: ");

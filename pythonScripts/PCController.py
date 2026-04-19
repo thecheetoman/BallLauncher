@@ -26,6 +26,9 @@ RZ_THRESHOLD = 50  # Values 0-255, 50 is ~20% pressed
 # Track trigger state
 rz_is_pressed = False
 
+# Track B button state
+b_button_pressed = False
+
 def send_command(command):
     """Send command to ROCK 4C+ server"""
     try:
@@ -85,18 +88,19 @@ def scan_controllers():
 
 def run_controller():
     """Main controller loop - read input and send to ROCK"""
-    global rz_is_pressed
+    global rz_is_pressed, b_button_pressed
     
     print("\n" + "="*60)
     print("RC Car Controller Active")
     print("="*60)
-    print("Right Trigger (RZ) controls motor:")
-    print("  Press   → MHigh")
-    print("  Release → MLow")
+    print("Controls:")
+    print("  Right Trigger (RZ) → C_ON:MHigh / C_OFF:MLow")
+    print("  B Button (BTN_EAST) → MEnable / MDisable")
     print("\nPress Ctrl+C to stop")
     print("="*60 + "\n")
     
     last_rz_value = 0
+    send_command("C_ON:MLow")
     
     try:
         while True:
@@ -104,7 +108,7 @@ def run_controller():
                 events = inputs.get_gamepad()
                 
                 for event in events:
-                    # Only process RZ (Right Trigger) events
+                    # Process RZ (Right Trigger) events
                     if event.code == 'ABS_RZ':
                         rz_value = event.state
                         
@@ -115,14 +119,28 @@ def run_controller():
                         
                         # Check if trigger crossed threshold
                         if rz_value >= RZ_THRESHOLD and not rz_is_pressed:
-                            # Trigger pressed
+                            # Trigger pressed - send compound command
                             rz_is_pressed = True
-                            send_command("MHigh")
+                            send_command("C_ON:MHigh")
                         
                         elif rz_value < RZ_THRESHOLD and rz_is_pressed:
-                            # Trigger released
+                            # Trigger released - send compound command
                             rz_is_pressed = False
-                            send_command("MLow")
+                            send_command("C_ON:MLow")
+                    
+                    # Process BTN_EAST (B button) events
+                    elif event.code == 'BTN_EAST' and event.ev_type == 'Key':
+                        if event.state == 1 and not b_button_pressed:
+                            # B button pressed
+                            b_button_pressed = True
+                            print("B Button: Pressed")
+                            send_command("MEnable")
+                        
+                        elif event.state == 0 and b_button_pressed:
+                            # B button released
+                            b_button_pressed = False
+                            print("B Button: Released")
+                            send_command("MDisable")
                 
             except inputs.UnpluggedError:
                 print("\n✗ Controller unplugged!")
@@ -135,7 +153,7 @@ def run_controller():
         print("\n\nStopping...")
         # Make sure motor is off when exiting
         if rz_is_pressed:
-            send_command("MLow")
+            send_command("C_OFF:MLow")
 
 def main():
     """Main function"""
