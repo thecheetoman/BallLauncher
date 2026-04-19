@@ -1,5 +1,5 @@
-#include "Motor/constants.h"
-#include "Arduino.h"
+#include "constants.h"
+#include <Arduino.h>
 
 void initMotor(){
     pinMode(mEnable, OUTPUT);

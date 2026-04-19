@@ -1,5 +1,5 @@
 #include <Arduino.h>
-#include <Motor/motorController.h>
+#include "motorController.h"
  
 void setup() {
   //Comms
