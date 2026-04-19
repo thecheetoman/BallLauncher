@@ -1,6 +1,6 @@
 #pragma once
 
-extern bool motorState;  // ✅ Declaration only (extern)
+extern bool motorState;  // Declaration only (extern)
 
 void initMotor();
 void motorEnable();
