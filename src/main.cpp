@@ -16,7 +16,6 @@ void setup() {
   
   Serial.println("Arduino Ready!");
   initMotor();
-  motorDisable();
 }
  
 void processCommand(String cmd) {
@@ -52,6 +51,9 @@ void processCommand(String cmd) {
 }
  
 void loop() {
+  // Update motor ramping
+  updateMotorRamp();
+  
   // Check if data available
   if (Serial.available() > 0) {
     String command = Serial.readStringUntil('\n');
