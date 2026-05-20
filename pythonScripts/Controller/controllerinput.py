@@ -14,6 +14,7 @@ button7 = False
 button8 = False
 button9 = False
 button10 = False
+button11 = False
 buttonQ = False
 
 axis0 = 0.0  # X-axis (Roll)
@@ -24,13 +25,15 @@ axis3 = 0.0  # Throttle (Slider)
 hat0 = (0, 0)
 
 keyQ = False
+keyR = False
 
 joystick = None
 running = False
+_thread_started = False
 
 def init_joystick():
-    """Initialize joystick and start input thread"""
-    global joystick, running
+    """Initialize joystick and start input thread. Safe to call multiple times."""
+    global joystick, running, _thread_started
     
     pygame.init()
     pygame.joystick.init()
@@ -44,37 +47,45 @@ def init_joystick():
     print(f"Connected to: {joystick.get_name()}")
     
     running = True
-    thread = threading.Thread(target=_input_loop, daemon=True)
-    thread.start()
     
-    # Start keyboard listener
-    listener = keyboard.Listener(on_press=_on_press, on_release=_on_release)
-    listener.start()
+    # Only start threads once
+    if not _thread_started:
+        _thread_started = True
+        thread = threading.Thread(target=_input_loop, daemon=True)
+        thread.start()
+        
+        # Start keyboard listener
+        listener = keyboard.Listener(on_press=_on_press, on_release=_on_release)
+        listener.start()
     
     return True
 
 def _on_press(key):
     """Handle keyboard press"""
-    global keyQ
+    global keyQ, keyR
     try:
         if key.char == 'q' or key.char == 'Q':
             keyQ = True
+        elif key.char == 'r' or key.char == 'R':
+            keyR = True
     except AttributeError:
         pass
 
 def _on_release(key):
     """Handle keyboard release"""
-    global keyQ
+    global keyQ, keyR
     try:
         if key.char == 'q' or key.char == 'Q':
             keyQ = False
+        elif key.char == 'r' or key.char == 'R':
+            keyR = False
     except AttributeError:
         pass
 
 def _input_loop():
     """Internal loop to update button/axis states"""
     global button0, button1, button2, button3, button4, button5, button6, button7
-    global button8, button9, button10, buttonQ
+    global button8, button9, button10, button11, buttonQ
     global axis0, axis1, axis2, axis3, hat0, running
     
     try:
@@ -102,8 +113,7 @@ def _input_loop():
                 button8 = bool(joystick.get_button(8))
                 button9 = bool(joystick.get_button(9))
                 button10 = bool(joystick.get_button(10))
-                button11 = bool(joystick.get_button(11))
-                
+                button11 = bool(joystick.get_button(11))                
                 # Update hat
                 hat0 = joystick.get_hat(0)
             

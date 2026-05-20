@@ -10,8 +10,12 @@ int targetLPWM = 0;
 int startRPWM = 0;
 int startLPWM = 0;
 unsigned long rampStartTime = 0;
-const unsigned long RAMP_DURATION = 500; // milliseconds for ramp to complete
+const unsigned long RAMP_DURATION = 1000; // milliseconds for ramp to complete
 bool isRamping = false;
+
+// Queue variables to force sequential stepping (fixes power crashes)
+int nextTargetRPWM = -1;
+int nextTargetLPWM = -1;
 
 void initMotor(){
     pinMode(mEnable, OUTPUT);
@@ -24,11 +28,33 @@ void initMotor(){
     currentRPWM = 0;
     targetLPWM = 0;
     targetRPWM = 0;
-    digitalWrite(mEnable, HIGH);
 }
 bool motorState = false;
 
-// Sine curve ramping function - call this regularly in your main loop
+// FIX: Moved startRamp UP here so updateMotorRamp can see it
+void startRamp(int newRPWM, int newLPWM){
+    // Safety check: Intercept direct jumps to mHigh from a standstill/low speed
+    if (newLPWM >= mHigh && currentLPWM < 100) {
+        nextTargetRPWM = newRPWM;
+        nextTargetLPWM = newLPWM; // Queue up the mHigh target for later
+        
+        targetRPWM = 0;
+        targetLPWM = 100; // Force it to ramp to the safe 100 stage first
+    } else {
+        // Regular ramp behavior
+        nextTargetRPWM = -1;
+        nextTargetLPWM = -1;
+        targetRPWM = newRPWM;
+        targetLPWM = newLPWM;
+    }
+
+    startRPWM = currentRPWM;  // Store current values as start point
+    startLPWM = currentLPWM;
+    rampStartTime = millis();
+    isRamping = true;
+}
+
+// Smooth ramping function - call this regularly in your main loop
 void updateMotorRamp(){
     if(!isRamping) return;
     
@@ -39,16 +65,25 @@ void updateMotorRamp(){
         currentRPWM = targetRPWM;
         currentLPWM = targetLPWM;
         isRamping = false;
+
+        // If a high-power stage was queued up, start it now automatically
+        if(nextTargetLPWM != -1 || nextTargetRPWM != -1){
+            int queuedR = nextTargetRPWM;
+            int queuedL = nextTargetLPWM;
+            nextTargetRPWM = -1; // Clear queue
+            nextTargetLPWM = -1;
+            startRamp(queuedR, queuedL);
+        }
     } else {
         // Calculate progress (0 to 1)
         float progress = (float)elapsedTime / RAMP_DURATION;
         
-        // Apply sine curve (0 to pi/2) for smooth acceleration
-        float sinProgress = sin(progress * M_PI / 2.0);
+        // Ease-In-Out curve to prevent current spikes
+        float smoothProgress = 0.5 * (1.0 - cos(progress * M_PI));
         
-        // Interpolate between start and target using sine curve
-        currentRPWM = (int)(startRPWM + (targetRPWM - startRPWM) * sinProgress);
-        currentLPWM = (int)(startLPWM + (targetLPWM - startLPWM) * sinProgress);
+        // Interpolate between start and target
+        currentRPWM = (int)(startRPWM + (targetRPWM - startRPWM) * smoothProgress);
+        currentLPWM = (int)(startLPWM + (targetLPWM - startLPWM) * smoothProgress);
     }
     
     // Write the current values
@@ -56,24 +91,16 @@ void updateMotorRamp(){
     analogWrite(RPWM, currentRPWM);
 }
 
-// Helper function to start a ramp
-void startRamp(int newRPWM, int newLPWM){
-    startRPWM = currentRPWM;  // Store current values as start point
-    startLPWM = currentLPWM;
-    targetRPWM = newRPWM;
-    targetLPWM = newLPWM;
-    rampStartTime = millis();
-    isRamping = true;
-}
-
 //Enable motor
 void motorEnable(){
+    digitalWrite(mEnable, HIGH);
     motorState = true;
     startRamp(0, 100);
 }
 //Disable motor
 void motorDisable(){
-    motorState = true;
+    digitalWrite(mEnable, LOW);
+    motorState = false; 
     startRamp(0, 0);
 }
 

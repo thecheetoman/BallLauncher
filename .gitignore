@@ -5,3 +5,4 @@
 .vscode/ipch
 .vscode/settings.json
 pythonScripts/Controller/__pycache__/controllerinput.cpython-313.pyc
+pythonScripts/Controller/__pycache__/comsToRock.cpython-313.pyc
